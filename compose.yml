@@ -1,60 +1,103 @@
 ---
 services:
   db:
-    image: shaikmustafa/arshad:db
-    deploy:
-      replicas: 1
-    ports:
-      - "3306:3306"
+    container_name: db
+    image: vidyasree06/vidya:db
+    build: ./database/
+    volumes:
+      - mydata:/var/lib/mysql/
     networks:
-      - mynetwork
+      - myapp
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        reservations:
+          cpus: "0.25"
+          memory: 100M
+        limits:
+          cpus: "0.5"
+          memory: 512M
 
-  auth_service:
-    image: shaikmustafa/arshad:auth
-    deploy:
-      replicas: 1
+  auth_services:
+    container_name: auth_services
+    image: vidyasree06/vidya:auth
+    build: ./auth/
     ports:
-      - "5001:5001"
+      - "50001:50001"
     networks:
-      - mynetwork
+      - myapp
+    deploy:
+      resources:
+        reservations:
+          cpus: "0.25"
+          memory: 100M
+        limits:
+          cpus: "0.5"
+          memory: 200M
     depends_on:
       - db
-    
 
-  book_service:
-    image: shaikmustafa/arshad:book
-    deploy:
-      replicas: 1
+  book_services:
+    container_name: book_services
+    image: vidyasree06/vidya:book
+    build: ./book/
     ports:
-      - "5002:5002"
+      - "50002:50002"
     networks:
-      - mynetwork
+      - myapp
+    deploy:
+      resources:
+        reservations:
+          cpus: "0.25"
+          memory: 100M
+        limits:
+          cpus: "0.5"
+          memory: 200M
     depends_on:
       - db
-  borrow_service:
-    image: shaikmustafa/arshad:borrow
-    deploy:
-      replicas: 1
+
+  borrow_services:
+    container_name: borrow_services
+    image: vidyasree06/vidya:borrow
+    build: ./borrow/
     ports:
       - "5003:5003"
     networks:
-      - mynetwork
+      - myapp
+    deploy:
+      resources:
+        reservations:
+          cpus: "0.25"
+          memory: 100M
+        limits:
+          cpus: "0.25"
+          memory: 200M
     depends_on:
       - db
 
-  frontend:
-    image: shaikmustafa/arshad:frontend
-    deploy:
-      replicas: 1
+  front_end:
+    container_name: frontend
+    image: vidyasree06/vidya:frontend
+    build: .
     ports:
       - "5000:5000"
     networks:
-      - mynetwork
-    depends_on:
-      - auth_service
-      - book_service
-      - borrow_service
+      - myapp
+    deploy:
+      resources:
+        reservations:
+          cpus: "0.25"
+          memory: 100M
+        limits:
+          cpus: "0.25"
+          memory: 200M
 
 networks:
-  mynetwork:
-    driver: bridge
+  myapp:
+    driver: overlay
+    attachable: true
+
+volumes:
+  mydata:
